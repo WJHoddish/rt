@@ -1,4 +1,6 @@
-#include "test/string.h"
+// #include "test/string.h"
+// #include "test/math.h"
+#include "test/traits.h"
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

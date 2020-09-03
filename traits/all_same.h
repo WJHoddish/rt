@@ -3,8 +3,8 @@
 //
 // Expand the use of "std::is_same<>".
 
-#ifndef DJA_ALL_SAME_H
-#define DJA_ALL_SAME_H
+#ifndef DJA_ALL_SAME_H_
+#define DJA_ALL_SAME_H_
 
 #include <type_traits>
 
