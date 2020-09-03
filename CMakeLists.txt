@@ -8,7 +8,7 @@ enable_testing()
 set ( optimize true )
 
 if( optimize MATCHES true )
-    set( cpp_version "-std=c++17" )
+    set( cpp_version "-std=c++11" )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_version} -I /usr/local/include -Wall -O2 -pthread -fopenmp")
     message( "Jiaheng: currently using " ${cpp_version} )
 else()
@@ -21,6 +21,7 @@ endif()
 
 aux_source_directory( . DIR_MAIN )
 add_executable( rt ${DIR_MAIN} )
+target_link_libraries( rt gtest gtest_main )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})
 set(CPACK_PROJECT_VERSION ${PROJECT_VERSION})

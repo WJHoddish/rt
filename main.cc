@@ -1,3 +1,6 @@
-#include <iostream>
+#include "test/string.h"
 
-int main(int, char**) { std::cout << "Hello, world!\n"; }
+int main(int argc, char** argv) {
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
+}
