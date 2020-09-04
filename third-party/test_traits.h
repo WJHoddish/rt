@@ -1,5 +1,7 @@
-#include "../traits/traits.h"
-#include "../util/util.h"
+// test my type_traits
+
+#include "traits/traits.h"
+#include "util/util.h"
 #include <gtest/gtest.h>
 
 using namespace dja;

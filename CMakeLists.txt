@@ -16,6 +16,7 @@ else()
     message( "Jiaheng: no optimization used" )
 endif()
 
+include_directories( ./include ./third-party )
 
 # file( GLOB_RECURSE DIR_SRC src/*.cpp src/*.h )
 

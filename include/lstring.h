@@ -4,8 +4,8 @@
 // Line String: A string with an exact 32-bytes layout, makes classes which own
 // it to be 64-bytes-long (fill an entire cache line).
 
-#ifndef DJA_LSTRING_H
-#define DJA_LSTRING_H
+#ifndef DJA_LSTRING_H_
+#define DJA_LSTRING_H_
 
 #include "traits/all_same.h"
 #include "util/util.h"
@@ -19,10 +19,11 @@ namespace dja {
 struct LString {
   // general data types, string category
 
-  using Char = uint8_t;
-  using Size = std::size_t;
-
   enum class Category { LITTLE = 0, MEDIUM, SHARED };
+
+  using Char = uint8_t;
+
+  using Size = std::size_t;
 
   // reference counting & core element: the arena
 
@@ -235,12 +236,10 @@ struct LString {
           break;
         }
         case Category::MEDIUM: {
-          // check my capacity and opposite's size
-          auto valid = arena_.capacity_;
-          auto need  = src.arena_.size_;
-
-          if (valid < need) {
-            // existing space is not enough, need realloc
+          // check my "capacity" (valid space) and opposite's size (needed size)
+          auto need = src.arena_.size_;
+          if (arena_.capacity_ < need) {
+            // existing space is not enough -> need realloc
             free(arena_.ptr_);
             arena_.ptr_      = (Char*)malloc((need + 1) * sizeof(Char));
             arena_.capacity_ = need;

@@ -1,5 +1,5 @@
-#include "../lstring.h"
-#include "../util/util.h"
+#include "lstring.h"
+#include "util/util.h"
 #include <gtest/gtest.h>
 
 using namespace dja;

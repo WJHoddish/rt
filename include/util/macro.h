@@ -3,8 +3,8 @@
 //
 // Macro defs for general use.
 
-#ifndef DJA_MACRO_H
-#define DJA_MACRO_H
+#ifndef DJA_MACRO_H_
+#define DJA_MACRO_H_
 
 #include <iostream>
 
