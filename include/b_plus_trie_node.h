@@ -10,6 +10,9 @@
 #include "type.h"
 
 namespace bpt {
+
+// Data types & Layouts of essential flags.
+
 using Char = dja::Char;
 
 using Size = dja::Size;
