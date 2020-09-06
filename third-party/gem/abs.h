@@ -3,8 +3,8 @@
 //
 // Solve the absolute value of x.
 
-#ifndef GEM_ABS_H_
-#define GEM_ABS_H_
+#ifndef GEM_ABS_H
+#define GEM_ABS_H
 
 namespace gem {
 

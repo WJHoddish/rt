@@ -16,12 +16,10 @@ else()
     message( "Jiaheng: no optimization used" )
 endif()
 
-include_directories( ./include ./third-party )
+include_directories(  ./include ./third-party )
 
-# file( GLOB_RECURSE DIR_SRC src/*.cpp src/*.h )
-
-aux_source_directory( . DIR_MAIN )
-add_executable( rt ${DIR_MAIN} )
+aux_source_directory(     . DIR_MAIN )
+add_executable(        rt ${DIR_MAIN} )
 target_link_libraries( rt gtest gtest_main )
 
 set(CPACK_PROJECT_NAME ${PROJECT_NAME})

@@ -1,7 +1,6 @@
 // Study trie variants!
 
-#include "test/test_lstring.h"
-#include "third-party/test_gem.h"
+#include "test.h"
 
 int main(int argc, char** argv) {
   testing::InitGoogleTest(&argc, argv);

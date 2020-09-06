@@ -3,8 +3,8 @@
 //
 // GEM ().
 
-#ifndef GEM_H_
-#define GEM_H_
+#ifndef GEM_H
+#define GEM_H
 
 #include "abs.h"
 #include "max.h"

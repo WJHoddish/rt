@@ -1,14 +1,15 @@
 // Copyright (C) 2020 Jiaheng Wang
 // Author: Jiaheng Wang <wjhgeneral@outlook.com>
 //
-// Line String: A string with an exact 32-bytes layout, makes classes which own
-// it to be 64-bytes-long (fill an entire cache line).
+// Cache-Line String: A string with an exact 32-bytes layout, makes classes
+// which own it to be 64-bytes-long (fill an entire cache line).
 
-#ifndef DJA_LSTRING_H_
-#define DJA_LSTRING_H_
+#ifndef DJA_LSTRING_H
+#define DJA_LSTRING_H
 
+#include "defs.h"
 #include "traits/all_same.h"
-#include "util/util.h"
+#include "type.h"
 #include <atomic>
 #include <cstdlib>
 #include <cstring>
@@ -17,15 +18,11 @@
 
 namespace dja {
 struct LString {
-  // general data types, string category
-
   enum class Category { LITTLE = 0, MEDIUM, SHARED };
 
-  using Char = uint8_t;
-
-  using Size = std::size_t;
-
-  // reference counting & core element: the arena
+  // Reference Counting Module (RCM):
+  // Use an anchor pointer to navigate the place in which the count is stored.
+  // The count number is ensured thread-safety.
 
   struct Share {
     std::atomic<Size> cnt_;     /*8*/
@@ -33,7 +30,7 @@ struct LString {
 
     static Share* create(const Char* str, Size len) {
       auto head =
-          (Share*)malloc(sizeof(Share) /*already has an 1-byte data*/ + len);
+          (Share*)malloc(sizeof(Share) /*already has an 1-byte pad*/ + len);
       head->cnt_.store(1, std::memory_order_release);
       memcpy(head->data_, str, len);
       head->data_[len] = '\0';
@@ -65,6 +62,9 @@ struct LString {
     }
   };
 
+  // Data Arena:
+  // The layout is exact 32-bytes-long (in x64 machines).
+
   struct Arena {
     char  flag_;     /*1*/
     Char  data_[7];  /*1+7=8*/
@@ -72,25 +72,23 @@ struct LString {
     Size  size_;     /*16+8=24*/
     Size  capacity_; /*24+8=32 (whole data field)*/
 
-    // how to modify (constructor, copy~ and destructor)
+    Arena(const char* str) {
+      init((Char*)str, strlen(str));
+    }
 
     Arena(const Char* str, Size len) {
       init(str, len);
     }
 
-    Arena(const char* str) {
-      init((Char*)str, strlen(str));
-    }
-
     Arena(const Arena& src) {
-      *this = src;
+      *this = src; // copy the whole arena
       switch (src.category()) {
       case Category::LITTLE: {
         break;
       }
       case Category::MEDIUM: {
-        ptr_ = (Char*)malloc((src.size_ + 1) * sizeof(Char));
-        memcpy(ptr_, src.ptr_, src.size_ + 1);
+        ptr_ = (Char*)malloc(sizeof(Char) * (src.size_ + 1));
+        memcpy(ptr_ /*ds*/, src.ptr_ /*sc*/, src.size_ + 1);
         break;
       }
       case Category::SHARED: {
@@ -103,7 +101,7 @@ struct LString {
     ~Arena() {
       switch (category()) {
       case Category::LITTLE: {
-        break;
+        break; // on-stack sso
       }
       case Category::MEDIUM: {
         free(ptr_);
@@ -116,8 +114,6 @@ struct LString {
       }
     }
 
-    // init
-
     force_inline void init(const Char* str, Size len) {
       if (len <= MAX_SIZE_LITTLE /*30*/) {
         initLittle(str, len);
@@ -128,7 +124,7 @@ struct LString {
       }
     }
 
-    void initLittle(const Char* str, Size len) {
+    force_inline void initLittle(const Char* str, Size len) {
       flag_ = static_cast<char>(len); // make flag as the string length
       memcpy(data_, str, len);
       data_[len] = '\0';
@@ -138,7 +134,7 @@ struct LString {
       flag_ = 0x40;
 
       // dynamic memory allocation
-      ptr_ = (Char*)malloc((len + 1) * sizeof(Char));
+      ptr_ = (Char*)malloc(sizeof(Char) * (len + 1));
       memcpy(ptr_, str, len);
       ptr_[len] = '\0';
       size_     = len;
@@ -148,13 +144,11 @@ struct LString {
     void initShared(const Char* str, Size len) {
       flag_ = 0x60;
 
-      // create a shared unit, reference count = 1
+      // create a shared unit
       ptr_      = Share::create(str, len)->data_;
       size_     = len;
       capacity_ = len;
     }
-
-    // bottlenecks
 
     force_inline Category category() const {
       if ((Size)flag_ <= MAX_SIZE_LITTLE) {
@@ -178,15 +172,12 @@ struct LString {
       case Category::SHARED:
         return g();
       }
-      throw;
     }
   };
 
-  constexpr static Size MAX_SIZE_LITTLE = sizeof(Arena) - 2;
+  constexpr static Size MAX_SIZE_LITTLE = sizeof(Arena) - 1 /*flag*/ - 1 /*\0*/;
 
   constexpr static Size MAX_SIZE_MEDIUM = 127;
-
-  // make use of an arena in the string
 
   Arena arena_;
 
@@ -205,19 +196,19 @@ struct LString {
   LString& operator=(const LString& src) {
     if (this != &src) {
       switch (arena_.category()) {
-        // TODO(jiaheng): Firstly, check the category of own string.
+        // Step.1: Check the own category.
+
+        // Step.2: Check the opposite string (source).
 
       case Category::LITTLE: {
         arena_ = src.arena_; // copy the whole arena
 
         switch (src.arena_.category()) {
-          // TODO(jiaheng): Secondly, check the category of opposite string.
-
         case Category::LITTLE: {
           break;
         }
         case Category::MEDIUM: {
-          arena_.ptr_ = (Char*)malloc((src.arena_.size_ + 1) * sizeof(Char));
+          arena_.ptr_ = (Char*)malloc(sizeof(Char) * (src.arena_.size_ + 1));
           memcpy(arena_.ptr_, src.arena_.ptr_, src.arena_.size_ + 1);
           break;
         }
@@ -236,14 +227,16 @@ struct LString {
           break;
         }
         case Category::MEDIUM: {
-          // check my "capacity" (valid space) and opposite's size (needed size)
+          // check the valid space (capacity) and needed size (opposite's size)
           auto need = src.arena_.size_;
+
+          // realloc (existing space is not enough)
           if (arena_.capacity_ < need) {
-            // existing space is not enough -> need realloc
             free(arena_.ptr_);
-            arena_.ptr_      = (Char*)malloc((need + 1) * sizeof(Char));
+            arena_.ptr_      = (Char*)malloc(sizeof(Char) * (need + 1));
             arena_.capacity_ = need;
           }
+
           arena_.size_ = need;
           memcpy(arena_.ptr_, src.arena_.ptr_, need + 1);
           break;
@@ -259,14 +252,14 @@ struct LString {
       }
       case Category::SHARED: {
         Share::sub(arena_.ptr_); // reference count -1
-        arena_ = src.arena_;     // copy the whole arena
+        arena_ = src.arena_;
 
         switch (src.arena_.category()) {
         case Category::LITTLE: {
           break;
         }
         case Category::MEDIUM: {
-          arena_.ptr_ = (Char*)malloc((src.arena_.size_ + 1) * sizeof(Char));
+          arena_.ptr_ = (Char*)malloc(sizeof(Char) * (src.arena_.size_ + 1));
           memcpy(arena_.ptr_, src.arena_.ptr_, src.arena_.size_ + 1);
           break;
         }
@@ -282,22 +275,18 @@ struct LString {
     return *this;
   }
 
-  // std::string-like interfaces
-
   const Char* c_str() const {
     return arena_.category() == Category::LITTLE ? arena_.data_ : arena_.ptr_;
   }
 
-  Size size() const {
+  std::size_t size() const {
     return arena_.category() == Category::LITTLE ? arena_.flag_ : arena_.size_;
   }
 
-  Size capacity() const {
+  std::size_t capacity() const {
     return arena_.category() == Category::LITTLE ? MAX_SIZE_LITTLE
                                                  : arena_.capacity_;
   }
-
-  // others
 
   void write(const char* fn) const {
     std::ofstream of;

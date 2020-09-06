@@ -1,3 +1,3 @@
 # RT
 
-Think about radix tree variants.
+Study radix tree variants.
