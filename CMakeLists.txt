@@ -8,7 +8,7 @@ enable_testing()
 set ( optimize true )
 
 if( optimize MATCHES true )
-    set( cpp_version "-std=c++11" )
+    set( cpp_version "-std=c++17" )
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${cpp_version} -I /usr/local/include -Wall -O2 -pthread -fopenmp")
     message( "Jiaheng: currently using " ${cpp_version} )
 else()
