@@ -13,7 +13,7 @@ AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine:  true
 AllowShortBlocksOnASingleLine:              false
 AllowShortCaseLabelsOnASingleLine:          false
-AllowShortFunctionsOnASingleLine:           false
+AllowShortFunctionsOnASingleLine:           true
 AllowShortIfStatementsOnASingleLine:        true
 AllowShortLoopsOnASingleLine:               true
 #

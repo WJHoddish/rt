@@ -1,16 +1,21 @@
 // Test B+ Trie node.
 
-#include "b_plus_trie/tree.h"
+#include "b_plus_trie/node/node.h"
 #include <gtest/gtest.h>
 
-using namespace bpt;
+using namespace dja::bpt;
 
 TEST(test_b_plus_trie, node) {
-  //
-  Node* leaf = new NodeLeaf();
+  // make a node ()
+  Node* leaf = new Node();
 
-  print(leaf->status_);
+  for (uint8_t i = 0; i < Node::ORDER - 1; ++i) {
+    std::cout << leaf->keys_[i] << ' ';
+  }
 
-  //
-  router(leaf, [](auto x) { delete x; });
+  int a[10]{};
+
+  for (uint8_t i = 0; i < 10; ++i) {
+    std::cout << a[i] << ' ';
+  }
 }

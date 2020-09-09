@@ -1,48 +1,47 @@
 // Copyright (C) 2020 Jiaheng Wang
 // Author: Jiaheng Wang <wjhgeneral@outlook.com>
 //
-// Base node with multiple flag bits.
+// B+ tree base node.
 
-#ifndef BPT_NODE_H
-#define BPT_NODE_H
+#ifndef DJA_BPT_NODE_H
+#define DJA_BPT_NODE_H
 
-#include "defs.h"
-#include "spread.h"
-#include "status.h"
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
 
+namespace dja {
 namespace bpt {
-struct NodeIndex;
-
 struct Node {
-  uint32_t   status_;
-  uint64_t   spread_;
-  NodeIndex* parent_; // index node
+  static const uint8_t TREE_ORDER = 16;
 
-  uint64_t keys_[15];
+  uint32_t status_;
+  uint64_t spread_;
+  Node*    parent_;
+  uint64_t keys_[TREE_ORDER - 1];
 
   Node()
       : status_(0)
       , spread_(0)
-      , parent_(nullptr) {
-    print("Node()");
-  }
+      , parent_(nullptr)
+      , keys_{} {}
 
-  ~Node() {
-    print("~Node()");
-  }
+protected:
+  ~Node() {}
+
+  static const uint32_t LOCK_BIT = (uint32_t)1 << 31;
+  static const uint32_t ROOT_BIT = (uint32_t)1 << 30;
+  static const uint32_t LEAF_BIT = (uint32_t)1 << 29;
+
+  void lock() { this->status_ |= LOCK_BIT; }
+
+  void setRoot() { this->status_ |= ROOT_BIT; }
+
+  void setLeaf() { this->status_ |= LEAF_BIT; }
 };
 
-struct NodeLeaf;
-
-template <typename F>
-force_inline constexpr auto router(Node* p, F&& f) {
-  if (is_leaf(p->status_)) {
-    f(reinterpret_cast<NodeLeaf*>(p));
-  } else {
-    f(reinterpret_cast<NodeIndex*>(p));
-  }
-}
-
 } // namespace bpt
+
+} // namespace dja
 
 #endif

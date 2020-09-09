@@ -7,7 +7,6 @@
 #ifndef DJA_LSTRING_H
 #define DJA_LSTRING_H
 
-#include "defs.h"
 #include "traits/all_same.h"
 #include "type.h"
 #include <atomic>
@@ -72,13 +71,9 @@ struct LString {
     Size  size_;     /*16+8=24*/
     Size  capacity_; /*24+8=32 (whole data field)*/
 
-    Arena(const char* str) {
-      init((Char*)str, strlen(str));
-    }
+    Arena(const char* str) { init((Char*)str, strlen(str)); }
 
-    Arena(const Char* str, Size len) {
-      init(str, len);
-    }
+    Arena(const Char* str, Size len) { init(str, len); }
 
     Arena(const Arena& src) {
       *this = src; // copy the whole arena
@@ -182,16 +177,13 @@ struct LString {
   Arena arena_;
 
   LString(const Char* str, Size len)
-      : arena_(str, len) {
-  }
+      : arena_(str, len) {}
 
   LString(const char* str)
-      : arena_(str) {
-  }
+      : arena_(str) {}
 
   LString(const LString& src)
-      : arena_(src.arena_) {
-  }
+      : arena_(src.arena_) {}
 
   LString& operator=(const LString& src) {
     if (this != &src) {
